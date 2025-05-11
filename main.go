@@ -35,7 +35,7 @@ func display(todos []types.ToDo) {
 	headerFormate := "%-5s %-35s %-19s"
 	formatString := "%-5d %-35s %-19s"
 
-	// clearScreen()
+	clearScreen()
 	header := fmt.Sprintf(headerFormate, "ID", "ToDo", "Created")
 
 	fmt.Println(coloredString(header, 176, 50, 255))
@@ -53,7 +53,14 @@ func main() {
 
 	err := godotenv.Load()
 	if err != nil {
-		fmt.Println(coloredString("error while loading the .env file", 255, 50, 50))
+		fmt.Println("error while loading the .env file")
+		os.Exit(1)
+	}
+
+	log, err := service.InitializeLogger()
+	if err != nil {
+		fmt.Println(fmt.Sprintf("error while setting up logger, %v", err))
+		os.Exit(1)
 	}
 
 	dbUser := os.Getenv("DB_USER")
@@ -63,14 +70,15 @@ func main() {
 
 	mds, err := datastore.InitializeMySqlDS(dbUser, dbPassword, dbHost, dbDatabase)
 	if err != nil {
-		fmt.Println(coloredString(err.Error(), 255, 50, 50))
+		log.Error(err.Error())
+		os.Exit(1)
 	}
 	defer mds.Db.Close()
 	ts := service.InitializeTodoService(mds)
 
 	args := os.Args
 	if len(args) < 2 {
-		fmt.Println(coloredString("Need to pass in an operaion (add/get/delete)", 255, 50, 50))
+		log.Error("Need to pass in an operaion (add/get/delete)")
 		os.Exit(1)
 	}
 
@@ -89,7 +97,7 @@ func main() {
 		ts.DeleteTodo()
 		display(ts.GetTodos())
 	default:
-		fmt.Println(coloredString("Entered invalid operation (add/get/delete)", 255, 50, 50))
+		log.Error("Entered invalid operation (add/get/delete)")
 		os.Exit(1)
 	}
 

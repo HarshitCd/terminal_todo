@@ -7,13 +7,24 @@ import (
 	"strings"
 	"terminal_todo/datastore"
 	"terminal_todo/types"
+
+	"github.com/sirupsen/logrus"
 )
+
+var log *logrus.Logger
 
 type TodoService struct {
 	Ds datastore.DataStore
 }
 
 func InitializeTodoService(ds datastore.DataStore) *TodoService {
+	l, err := InitializeLogger()
+	if err != nil {
+		fmt.Println("error while setting up logger")
+		os.Exit(1)
+	}
+	log = l
+
 	return &TodoService{
 		Ds: ds,
 	}
@@ -27,7 +38,8 @@ func (ts *TodoService) AddTodo() types.ToDo {
 
 	todo, err := ts.Ds.AddTodo(task)
 	if err != nil {
-		fmt.Println("error has taken place in add service", err)
+		log.Error("error has taken place in add service ", err)
+		os.Exit(1)
 	}
 
 	return todo
@@ -40,14 +52,16 @@ func (ts *TodoService) DeleteTodo() {
 
 	err := ts.Ds.DeleteTodo(id)
 	if err != nil {
-		fmt.Println("error has taken place in delete service", err)
+		log.Error("error has taken place in delete service ", err)
+		os.Exit(1)
 	}
 }
 
 func (ts *TodoService) GetTodos() []types.ToDo {
 	todos, err := ts.Ds.GetTodos()
 	if err != nil {
-		fmt.Println("error has taken place in get service", err)
+		log.Error("error has taken place in get service ", err)
+		os.Exit(1)
 	}
 
 	return todos

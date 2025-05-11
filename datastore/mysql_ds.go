@@ -24,10 +24,17 @@ func InitializeMySqlDS(user string, password string, host string, database strin
 		return nil, err
 	}
 
-	return &MySqlDS{
+	mds := &MySqlDS{
 		Dsn: dsn,
 		Db:  db,
-	}, nil
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return mds, err
+	}
+
+	return mds, nil
 }
 
 func (mds *MySqlDS) Close() error {
