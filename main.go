@@ -9,9 +9,56 @@ import (
 	"terminal_todo/datastore"
 	"terminal_todo/service"
 	"terminal_todo/types"
+	"time"
 
 	"github.com/joho/godotenv"
 )
+
+func humanReadableTime(t time.Time) string {
+	loc, err := time.LoadLocation("Asia/Kolkata")
+	if err != nil {
+		return "time error"
+	}
+	now := time.Now().In(loc)
+	duration := now.Sub(t)
+	readableTime := ""
+
+	switch {
+	case duration < time.Minute:
+		secs := int(duration.Seconds())
+		if secs <= 1 {
+			readableTime = "just now"
+		} else {
+			readableTime = fmt.Sprintf("%d seconds ago", secs)
+		}
+	case duration < time.Hour:
+		minutes := int(duration.Minutes())
+		if minutes <= 1 {
+			readableTime = "a minute ago"
+		} else {
+			readableTime = fmt.Sprintf("%d minutes ago", minutes)
+		}
+	case duration < 24*time.Hour:
+		hours := int(duration.Hours())
+		if hours <= 1 {
+			readableTime = "an hour ago"
+		} else {
+			readableTime = fmt.Sprintf("%d hours ago", hours)
+		}
+	case duration < 48*time.Hour:
+		readableTime = "yesterday"
+	case duration < 7*24*time.Hour:
+		readableTime = fmt.Sprintf("%d days ago", int(duration.Hours()/24))
+	case duration == 7*24*time.Hour:
+		readableTime = "a week ago"
+	case duration < 30*24*time.Hour:
+		readableTime = fmt.Sprintf("%d weeks ago", int(duration.Hours()/(24*7)))
+	default:
+		readableTime = t.Format("02 Jan 2006")
+	}
+
+	return readableTime
+}
 
 func coloredString(s string, r, g, b int) string {
 	coloredStringTemplate := "\033[38;2;%d;%d;%dm%s\033[0m"
@@ -32,18 +79,24 @@ func clearScreen() {
 }
 
 func display(todos []types.ToDo) {
-	headerFormate := "%-5s %-35s %-19s"
-	formatString := "%-5d %-35s %-19s"
+	headerFormate := "%-5s %-*s %-19s"
+	formatString := "%-5d %-*s %-19s"
+	taskWidth := 25
+
+	for _, todo := range todos {
+		if taskWidth-5 < len(todo.Task) {
+			taskWidth = len(todo.Task) + 5
+		}
+	}
 
 	clearScreen()
-	header := fmt.Sprintf(headerFormate, "ID", "ToDo", "Created")
+	header := fmt.Sprintf(headerFormate, "ID", taskWidth, "ToDo", "Created")
 
 	fmt.Println(coloredString(header, 176, 50, 255))
 	fmt.Println()
 
-	for i := len(todos) - 1; i >= 0; i-- {
-		todo := todos[i]
-		fmt.Printf(formatString+"\n", todo.Id, todo.Task, todo.CreateTime.Format("2006-01-02 15:04:05"))
+	for _, todo := range todos {
+		fmt.Printf(formatString+"\n", todo.Id, taskWidth, todo.Task, humanReadableTime(todo.CreateTime))
 	}
 	fmt.Println()
 }
@@ -72,10 +125,15 @@ func main() {
 
 	mds, err := datastore.InitializeMySqlDS(dbUser, dbPassword, dbHost, dbDatabase)
 	if err != nil {
+		if mds != nil {
+			mds.Close()
+		}
+
 		log.Error(err.Error())
 		os.Exit(1)
 	}
-	defer mds.Db.Close()
+	defer mds.Close()
+
 	ts := service.InitializeTodoService(mds)
 
 	args := os.Args

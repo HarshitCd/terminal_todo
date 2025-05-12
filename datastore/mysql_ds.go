@@ -16,7 +16,7 @@ type MySqlDS struct {
 }
 
 func InitializeMySqlDS(user string, password string, host string, database string) (*MySqlDS, error) {
-	dsnTemplate := "%s:%s@tcp(%s)/%s?parseTime=true"
+	dsnTemplate := "%s:%s@tcp(%s)/%s?parseTime=true&loc=Asia%%2FKolkata"
 	dsn := fmt.Sprintf(dsnTemplate, user, password, host, database)
 
 	db, err := sql.Open("mysql", dsn)
@@ -82,7 +82,7 @@ func (mds *MySqlDS) DeleteTodo(id int64) error {
 
 func (mds *MySqlDS) GetTodos() ([]types.ToDo, error) {
 	todos := []types.ToDo{}
-	query := "SELECT id, task, create_time FROM todos"
+	query := "SELECT id, task, create_time FROM todos ORDER BY create_time DESC"
 	rows, err := mds.Db.Query(query)
 	if err != nil {
 		return nil, err
