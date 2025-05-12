@@ -48,10 +48,12 @@ func display(todos []types.ToDo) {
 	fmt.Println()
 }
 
+var envPath string
+
 func main() {
 	// sds := datastore.InitializeSimpleDS()
 
-	err := godotenv.Load()
+	err := godotenv.Load(envPath)
 	if err != nil {
 		fmt.Println("error while loading the .env file")
 		os.Exit(1)
