@@ -79,8 +79,8 @@ func clearScreen() {
 }
 
 func display(todos []types.ToDo) {
-	headerFormate := "%-5s %-*s %-19s"
-	formatString := "%-5d %-*s %-19s"
+	headerFormate := "%-5s %-*s %-12s %-19s"
+	formatString := "%-5d %-*s %-12s %-19s"
 	taskWidth := 25
 
 	for _, todo := range todos {
@@ -90,13 +90,13 @@ func display(todos []types.ToDo) {
 	}
 
 	clearScreen()
-	header := fmt.Sprintf(headerFormate, "ID", taskWidth, "ToDo", "Created")
+	header := fmt.Sprintf(headerFormate, "ID", taskWidth, "ToDo", "Status", "Created")
 
 	fmt.Println(coloredString(header, 176, 50, 255))
 	fmt.Println()
 
 	for _, todo := range todos {
-		fmt.Printf(formatString+"\n", todo.Id, taskWidth, todo.Task, humanReadableTime(todo.CreateTime))
+		fmt.Printf(formatString+"\n", todo.Id, taskWidth, todo.Task, todo.Status, humanReadableTime(todo.CreateTime))
 	}
 	fmt.Println()
 }
@@ -138,24 +138,41 @@ func main() {
 
 	args := os.Args
 	if len(args) < 2 {
-		log.Error("Need to pass in an operaion (add/get/delete)")
+		log.Error("Need to pass in an operaion (add/get/set/delete)")
 		os.Exit(1)
 	}
 
 	op := args[1]
 	op = strings.ToUpper(op)
 
+	var status string
+	if len(args) == 2 && op == "DELETE" {
+		status = ""
+	} else if len(args) == 3 {
+		status = args[2]
+		status = strings.ToLower(status)
+	} else {
+		log.Error("Need to pass in a status (add/get/set)")
+		os.Exit(1)
+	}
+	fmt.Println(status, args)
+
 	switch op {
 	case "GET":
-		display(ts.GetTodos())
+		display(ts.GetTodos(status))
 	case "ADD":
-		display(ts.GetTodos())
-		ts.AddTodo()
-		display(ts.GetTodos())
+		display(ts.GetTodos("all"))
+		ts.AddTodo(status)
+		display(ts.GetTodos("all"))
+
+	case "SET":
+		display(ts.GetTodos("all"))
+		ts.SetTodos(status)
+		display(ts.GetTodos("all"))
 	case "DELETE":
-		display(ts.GetTodos())
+		display(ts.GetTodos("all"))
 		ts.DeleteTodo()
-		display(ts.GetTodos())
+		display(ts.GetTodos("all"))
 	default:
 		log.Error("Entered invalid operation (add/get/delete)")
 		os.Exit(1)

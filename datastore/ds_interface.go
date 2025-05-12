@@ -3,7 +3,8 @@ package datastore
 import "terminal_todo/types"
 
 type DataStore interface {
-	AddTodo(task string) (types.ToDo, error)
+	AddTodo(task string, status string) (types.ToDo, error)
 	DeleteTodo(id int64) error
-	GetTodos() ([]types.ToDo, error)
+	GetTodos(status string) ([]types.ToDo, error)
+	SetTodos(status string, id int64) error
 }
