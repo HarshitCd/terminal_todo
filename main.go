@@ -15,11 +15,7 @@ import (
 )
 
 func humanReadableTime(t time.Time) string {
-	loc, err := time.LoadLocation("Asia/Kolkata")
-	if err != nil {
-		return "time error"
-	}
-	now := time.Now().In(loc)
+	now := time.Now()
 	duration := now.Sub(t)
 	readableTime := ""
 
@@ -49,7 +45,7 @@ func humanReadableTime(t time.Time) string {
 		readableTime = "yesterday"
 	case duration < 7*24*time.Hour:
 		readableTime = fmt.Sprintf("%d days ago", int(duration.Hours()/24))
-	case duration == 7*24*time.Hour:
+	case duration <= 2*7*24*time.Hour:
 		readableTime = "a week ago"
 	case duration < 30*24*time.Hour:
 		readableTime = fmt.Sprintf("%d weeks ago", int(duration.Hours()/(24*7)))

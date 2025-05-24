@@ -16,7 +16,7 @@ type MySqlDS struct {
 }
 
 func InitializeMySqlDS(user string, password string, host string, database string) (*MySqlDS, error) {
-	dsnTemplate := "%s:%s@tcp(%s)/%s?parseTime=true&loc=Asia%%2FKolkata"
+	dsnTemplate := "%s:%s@tcp(%s)/%s?parseTime=true"
 	dsn := fmt.Sprintf(dsnTemplate, user, password, host, database)
 
 	db, err := sql.Open("mysql", dsn)
@@ -42,6 +42,10 @@ func (mds *MySqlDS) Close() error {
 }
 
 func (mds *MySqlDS) AddTodo(task string, status string) (types.ToDo, error) {
+	loc, err := time.LoadLocation("Asia/Kolkata")
+	if err != nil {
+		return types.ToDo{}, fmt.Errorf("time error, %v", err)
+	}
 	query := "INSERT INTO todos (task, status) VALUES (?, ?)"
 	stmt, err := mds.Db.Prepare(query)
 	if err != nil {
@@ -62,7 +66,7 @@ func (mds *MySqlDS) AddTodo(task string, status string) (types.ToDo, error) {
 	return types.ToDo{
 		Id:         id,
 		Task:       task,
-		CreateTime: time.Now(),
+		CreateTime: time.Now().In(loc),
 	}, nil
 }
 
